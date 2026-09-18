@@ -1,4 +1,4 @@
-## 📄 Tài Liệu Báo Cáo & Hướng Dẫn Chi Tiết
+## Tài Liệu Báo Cáo & Hướng Dẫn Chi Tiết
 
 Toàn bộ tài liệu chi tiết về hướng dẫn cài đặt qua Terminal, kịch bản thực nghiệm, bảng số liệu đối đầu thực tế giữa **OpenAI Whisper**, **Faster-Whisper** và **Whisper.cpp**
 
