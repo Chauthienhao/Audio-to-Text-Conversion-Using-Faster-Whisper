@@ -20,7 +20,7 @@ def transcript_audio(
 
     # Chạy transcription
     batched_pipeline = BatchedInferencePipeline(model=model)
-    segments, _ = batched_pipeline.transcribe(input, **transcript_kwargs)
+    segments, _ = batched_pipeline.transcribe(input, **transcript_kwargs, batch_size=16)
     segments = preprocess_transcript(segments)
     processed_segments = preprocess_transcript(segments)
     return processed_segments
