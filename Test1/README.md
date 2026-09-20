@@ -30,7 +30,7 @@ Nếu hệ thống chưa có sẵn công cụ FFmpeg để giải mã âm thanh,
 winget install Gyan.FFmpeg
 ```
 
-[!IMPORTANT]
+![IMPORTANT]
 **LƯU Ý QUAN TRỌNG:** Pytorch KHÔNG NÊN sử dụng trong Faster-Whisper, tải Pytorch ở đây chỉ là để dùng so sánh với OpenAIWhisper để cho mình thấy trực quan vấn đề. (ĐỪNG NHẦM LẪN VÀ HÃY DOWN CUDA 😭)
 
 ## 2. HƯỚNG DẪN CHẠY KIỂM THỬ TRÊN TERMINAL
