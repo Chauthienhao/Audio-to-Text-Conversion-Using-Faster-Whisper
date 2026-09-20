@@ -30,7 +30,7 @@ Nếu hệ thống chưa có sẵn công cụ FFmpeg để giải mã âm thanh,
 winget install Gyan.FFmpeg
 ```
 
-![IMPORTANT]
+[!IMPORTANT]
 **LƯU Ý QUAN TRỌNG:** Pytorch KHÔNG NÊN sử dụng trong Faster-Whisper, tải Pytorch ở đây chỉ là để dùng so sánh với OpenAIWhisper để cho mình thấy trực quan vấn đề. (ĐỪNG NHẦM LẪN VÀ HÃY DOWN CUDA 😭)
 
 ## 2. HƯỚNG DẪN CHẠY KIỂM THỬ TRÊN TERMINAL
@@ -45,11 +45,11 @@ Tiến trình xử lý: Terminal lần lượt duyệt qua 5 file âm thanh sạ
 
 ## 3. KẾT QUẢ THU ĐƯỢC
 #### Clean(Không có tiếng ồn):
-![Image](pic1.png)
+![Image](PicReadme/pic1.png)
 
 #### Noise(Có tiếng ồn):
-![Image](pic2.png)
-![Image](pic3.png)
+![Image](PicReadme/pic2.png)
+![Image](PicReadme/pic3.png)
 
 ## 4. CÁC VẤN ĐỀ KĨ THUẬT
 
