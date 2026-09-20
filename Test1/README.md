@@ -10,11 +10,19 @@ Sau đó Vào trang CUDA Toolkit Archive.
 Chọn bản phù hợp
 Chọn window x86_64, cài exe
 Bật exe cài Express
+#### Cách check xem đã cài thành công chưa:
+```powershell
+nvcc --version
+```
 
-Tải cấu hình cuda cuDNN
-Truy cập trang tải: cuDNN Archive và tải gói cuDNN tương thích với phiên bản CUDA vừa cài đặt.
-Giải nén file .zip vừa tải về, bạn sẽ thấy 3 thư mục: bin, include, lib.
-Sao chép toàn bộ các tệp trong từng thư mục đó và dán đè vào thư mục cài đặt CUDA Toolkit tương ứng trên máy (đường dẫn mặc định thường là: C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.x\).
+Tải cấu hình cuda cuDNN ta chạy lệnh:
+```powershell
+pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
+```
+Cách check xem đã cài đc cuda cuDNN chưa:
+```powershell
+python -c "from faster_whisper import WhisperModel; model = WhisperModel('base', device='cuda', compute_type='float16'); print('KICH HOAT GPU THANH CONG!')"
+```
 
 #### Cài thư viện
 Nâng cấp gói python (Nếu quá cũ)
@@ -30,8 +38,10 @@ Nếu hệ thống chưa có sẵn công cụ FFmpeg để giải mã âm thanh,
 winget install Gyan.FFmpeg
 ```
 
-[!IMPORTANT]
-**LƯU Ý QUAN TRỌNG:** Pytorch KHÔNG NÊN sử dụng trong Faster-Whisper, tải Pytorch ở đây chỉ là để dùng so sánh với OpenAIWhisper để cho mình thấy trực quan vấn đề. (ĐỪNG NHẦM LẪN VÀ HÃY DOWN CUDA 😭)
+[!WARNING]
+### LƯU Ý QUAN TRỌNG 
+**Pytorch KHÔNG NÊN sử dụng trong Faster-Whisper, tải Pytorch ở đây chỉ là để dùng so sánh với OpenAIWhisper để cho mình thấy trực quan vấn đề.** 
+**ĐỪNG NHẦM LẪN VÀ HÃY DOWN CUDA 😭**
 
 ## 2. HƯỚNG DẪN CHẠY KIỂM THỬ TRÊN TERMINAL
 Di chuyển vào thư mục kiểm thử và chạy file benchmark:
