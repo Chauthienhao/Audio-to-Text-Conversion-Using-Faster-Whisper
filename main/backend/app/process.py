@@ -7,43 +7,43 @@ def clean_space(text: str) -> str:
 
 def preprocess_transcript(segments : list):
     processed_segments = []
-    max_words_per_line = 12
+    max_words_per_line = 20
+    split_punctuations = {'.','!','?',';',':'}  # Regular expression to split on punctuation
     for segment in segments:
-        # processed_segments.append({
-        #     'start': segment.start,         # Start time of the segment
-        #     'end': segment.end,         # End time of the segment
-        #     'text': clean_space(segment.text).strip()         # Cleaned text of the segment
-        # })
-        # Kiểm tra xem AI có trả về mốc thời gian cho từng từ không
         if hasattr(segment, 'words') and segment.words:
             current_chunk = []
             chunk_start = None
             
             for word in segment.words:
                 if chunk_start is None:
-                    chunk_start = word.start # Lấy thời gian bắt đầu của từ đầu tiên trong dòng
+                    chunk_start = word.start # Lấy thời gian bắt đầu của từ đầu tiên
                 
-                current_chunk.append(word.word.strip())
+                clean_word = word.word.strip()
+                current_chunk.append(clean_word)
                 
-                # Cứ đủ 12 chữ là đóng thành một dòng phụ đề
-                if len(current_chunk) >= max_words_per_line:
+                # Kiểm tra từ có chứa dấu câu ở cuối hay không (vd: "nhé.", "đi,")
+                has_punctuation = any(p in clean_word for p in split_punctuations)
+                
+                # Ngắt dòng nếu: Gặp dấu câu HOẶC độ dài đã đạt mức tối đa
+                if has_punctuation or len(current_chunk) >= max_words_per_line:
                     processed_segments.append({
                         'start': chunk_start,
-                        'end': word.end, # Lấy thời gian kết thúc của từ cuối cùng
-                        'text': " ".join(current_chunk)
+                        'end': word.end,
+                        'text': clean_space(" ".join(current_chunk)).strip()
                     })
+                    # Reset lại để chuẩn bị cho dòng tiếp theo
                     current_chunk = []
                     chunk_start = None
             
-            # Lưu lại những từ còn dư ở cuối câu chưa đủ 12 chữ
+            # Lưu lại những từ còn dư ở cuối đoạn chưa được đóng thành dòng
             if current_chunk:
                 processed_segments.append({
                     'start': chunk_start,
                     'end': segment.words[-1].end,
-                    'text': " ".join(current_chunk)
+                    'text': clean_space(" ".join(current_chunk)).strip()
                 })
         else:
-            # Chạy dự phòng (fallback) nếu quên bật word_timestamps
+            # Chạy dự phòng (fallback) nếu không bật word_timestamps
             processed_segments.append({
                 'start': segment.start,
                 'end': segment.end,
@@ -56,7 +56,7 @@ def transcript_audio(
         model_size: str = "base",
         device: str = "cpu",
         compute_type: str = "int8",
-        beam_size: int =5,
+        beam_size: int =3,
         vad_filter: bool = True):
     if not os.path.exists(input):           # Kiểm tra xem file có tồn tại không
         raise FileNotFoundError(f"File {input} does not exist.")
