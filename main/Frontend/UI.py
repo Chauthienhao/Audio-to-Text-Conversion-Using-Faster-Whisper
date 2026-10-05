@@ -4,7 +4,7 @@ import sys
 import subprocess
 import gradio as gr
 
-# Nạp DLLs CUDA cho tiến trình[cite: 2, 3]
+# Nạp DLLs CUDA cho tiến trình
 nvidia_base = os.path.join(sys.prefix, "Lib", "site-packages", "nvidia")
 if os.path.exists(nvidia_base):
     for sub in ["cublas", "cudnn"]:
@@ -14,7 +14,7 @@ if os.path.exists(nvidia_base):
                 os.add_dll_directory(bin_dir)
             os.environ["PATH"] = bin_dir + os.pathsep + os.environ["PATH"]
 
-# Thêm thư mục gốc vào path để import module backend[cite: 4]
+# Thêm thư mục gốc vào path để import module backend
 current_dir = os.path.dirname(os.path.abspath(__file__)) 
 root_dir = os.path.dirname(current_dir)
 sys.path.append(root_dir)
@@ -40,7 +40,7 @@ def process_media(file_path):
 
     # Rẽ nhánh hậu xử lý
     if is_video:
-        # Hậu xử lý bằng FFmpeg: Ép cứng phụ đề vào khung hình video[cite: 5, 7]
+        # Hậu xử lý bằng FFmpeg: Ép cứng phụ đề vào khung hình video
         escaped_srt = srt_filename.replace("\\", "/").replace(":", "\\:")
         
         ffmpeg_cmd = [

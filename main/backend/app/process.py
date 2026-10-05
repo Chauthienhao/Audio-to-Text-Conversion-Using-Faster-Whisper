@@ -4,7 +4,7 @@ import sys
 import re
 from faster_whisper import WhisperModel, BatchedInferencePipeline
 
-# Tự động nạp thư viện CUDA DLLs (cublas, cudnn) để chạy được trên GPU[cite: 2, 3]
+# Tự động nạp thư viện CUDA DLLs (cublas, cudnn) để chạy được trên GPU
 nvidia_base = os.path.join(sys.prefix, "Lib", "site-packages", "nvidia")
 if os.path.exists(nvidia_base):
     for sub in ["cublas", "cudnn"]:
@@ -69,7 +69,7 @@ def transcript_audio(
         input: str = "video.mp4",
         model_size: str = "base",
         device: str = "cuda",
-        compute_type: str = "float32",
+        compute_type: str = "int8",
         beam_size: int = 3,
         vad_filter: bool = True):
     if not os.path.exists(input):
