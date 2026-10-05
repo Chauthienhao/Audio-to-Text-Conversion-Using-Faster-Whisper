@@ -1,42 +1,52 @@
-import gradio as gr
+#region 1. Import Thư Viện, Nạp DLLs & Định Tuyến Module
 import os
-import subprocess
 import sys
-current_dir = os.path.dirname(os.path.abspath(__file__)) # Trỏ tới thư mục Frontend
-root_dir = os.path.dirname(current_dir) # Lùi lại 1 cấp ra thư mục cha (main)
+import subprocess
+import gradio as gr
 
-# 2. Đưa thư mục gốc vào danh sách tìm kiếm module của Python
+# Nạp DLLs CUDA cho tiến trình[cite: 2, 3]
+nvidia_base = os.path.join(sys.prefix, "Lib", "site-packages", "nvidia")
+if os.path.exists(nvidia_base):
+    for sub in ["cublas", "cudnn"]:
+        bin_dir = os.path.join(nvidia_base, sub, "bin")
+        if os.path.exists(bin_dir):
+            if hasattr(os, "add_dll_directory"):
+                os.add_dll_directory(bin_dir)
+            os.environ["PATH"] = bin_dir + os.pathsep + os.environ["PATH"]
+
+# Thêm thư mục gốc vào path để import module backend[cite: 4]
+current_dir = os.path.dirname(os.path.abspath(__file__)) 
+root_dir = os.path.dirname(current_dir)
 sys.path.append(root_dir)
+
 from backend.app.process import transcript_audio, save
+#endregion
 
-# Hàm quy đổi giây sang chuẩn SRT bắt buộc để FFmpeg có thể đọc và ép chữ vào video
-def format_time(seconds):
-    hrs = int(seconds // 3600)
-    mins = int((seconds % 3600) // 60)
-    secs = int(seconds % 60)
-    msec = int((seconds - int(seconds)) * 1000)
-    return f"{hrs:02d}:{mins:02d}:{secs:02d},{msec:03d}"
-
+#region 2. Điều Phối Xử Lý & Hậu Xử Lý Gán Cứng Phụ Đề (FFmpeg)
 def process_media(file_path):
-    # Phân loại Audio hay Video
+    if not file_path:
+        return None, []
+        
     ext = os.path.splitext(file_path)[-1].lower()
     video_extensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm']
     is_video = ext in video_extensions
     
-    srt_filename ="phude_ketqua.srt"
-    output_video_filename ="video_cophude.mp4"
+    srt_filename = os.path.join(current_dir, "phude_ketqua.srt")
+    output_video_filename = os.path.join(current_dir, "video_cophude.mp4")
 
-    # 1. Gọi hàm transcript_audio từ file process.py
+    # Nhận diện âm thanh trực tiếp từ video/audio
     segments = transcript_audio(input=file_path)
     save(segments, srt_filename)
-    # 3. Rẽ nhánh hiển thị
+
+    # Rẽ nhánh hậu xử lý
     if is_video:
-        # Nhúng cứng phụ đề vào video bằng FFmpeg
+        # Hậu xử lý bằng FFmpeg: Ép cứng phụ đề vào khung hình video[cite: 5, 7]
         escaped_srt = srt_filename.replace("\\", "/").replace(":", "\\:")
+        
         ffmpeg_cmd = [
             "ffmpeg", "-y", 
             "-i", file_path, 
-            "-vf", f"subtitles={escaped_srt}",
+            "-vf", f"subtitles='{escaped_srt}'",
             "-c:v", "libx264",
             "-pix_fmt", "yuv420p",
             "-c:a", "aac",
@@ -44,19 +54,20 @@ def process_media(file_path):
             output_video_filename
         ]
         try:
-            subprocess.run(ffmpeg_cmd, check=True,capture_output=True,text=True)
+            subprocess.run(ffmpeg_cmd, check=True, capture_output=True, text=True)
             return output_video_filename, [output_video_filename, srt_filename]
         except subprocess.CalledProcessError as e:   
-            print(f"Error occurred while embedding subtitles: {e}")
+            print(f"Lỗi khi gắn phụ đề bằng FFmpeg: {e}")
             print(e.stderr)
             return None, [srt_filename]          
     else:
-        # Nếu là Audio: Ẩn video player, chỉ cho tải file SRT
+        # File âm thanh thuần: chỉ trả về tệp phụ đề .srt
         return None, [srt_filename]
+#endregion
 
-# Thiết kế giao diện Gradio
+#region 3. Giao Diện Người Dùng Gradio
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
-    gr.Markdown("## 🎙️ Giao Diện Nhận Dạng Giọng Nói (Faster-Whisper)")
+    gr.Markdown("## 🎙 Giao Diện Nhận Dạng Giọng Nói & Tự Động Gắn Phụ Đề (Faster-Whisper)")
     
     with gr.Row():
         with gr.Column():
@@ -64,8 +75,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
             submit_btn = gr.Button("Bắt đầu xử lý", variant="primary")
             
         with gr.Column():
-            output_video = gr.Video(label="Trình phát Video (Có phụ đề)")
-            output_files = gr.File(label="Tải kết quả về máy")
+            output_video = gr.Video(label="Trình phát Video (Đã gắn phụ đề)")
+            output_files = gr.File(label="Tải kết quả về máy (Video / File SRT)")
 
     submit_btn.click(
         fn=process_media, 
@@ -75,3 +86,4 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 
 if __name__ == "__main__":
     demo.launch()
+#endregion
