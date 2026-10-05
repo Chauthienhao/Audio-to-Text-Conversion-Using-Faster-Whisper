@@ -2,6 +2,7 @@
 import os
 import sys
 import re
+import subprocess
 from faster_whisper import WhisperModel, BatchedInferencePipeline
 
 # Tự động nạp thư viện CUDA DLLs (cublas, cudnn) để chạy được trên GPU
@@ -15,7 +16,37 @@ if os.path.exists(nvidia_base):
             os.environ["PATH"] = bin_dir + os.pathsep + os.environ["PATH"]
 #endregion
 
-#region 2. Tiền Xử Lý Văn Bản & Ngắt Dòng Phụ Đề
+#region 2. Tiền Xử Lý: Bóc Tách & Chuẩn Hóa Âm Thanh Bằng FFmpeg
+def extract_and_preprocess_audio(input_media_path: str, output_wav_path: str = "temp_preprocessed.wav") -> str:
+    """
+    Tiền xử lý đầu vào: Sử dụng FFmpeg để trích xuất âm thanh từ video/audio bất kỳ,
+    chuẩn hóa về định dạng tối ưu nhất cho mô hình Whisper:
+    - 1 kênh (Mono: -ac 1)
+    - Tần số lấy mẫu chuẩn (16000Hz: -ar 16000)
+    - Định dạng PCM 16-bit không nén (-c:a pcm_s16le)
+    """
+    if not os.path.exists(input_media_path):
+        raise FileNotFoundError(f"Tệp tin {input_media_path} không tồn tại.")
+
+    ffmpeg_cmd = [
+        "ffmpeg", "-y",
+        "-i", input_media_path,
+        "-vn",                      # Bỏ luồng hình ảnh, chỉ lấy âm thanh
+        "-ac", "1",                 # Ép về 1 kênh Mono để giảm tải tính toán
+        "-ar", "16000",             # Ép chuẩn tần số 16kHz chuẩn cho Whisper
+        "-c:a", "pcm_s16le",        # Xuất định dạng âm thanh WAV chuẩn
+        output_wav_path
+    ]
+    try:
+        subprocess.run(ffmpeg_cmd, check=True, capture_output=True, text=True)
+        return output_wav_path
+    except subprocess.CalledProcessError as e:
+        print(f"Lỗi khi tiền xử lý âm thanh bằng FFmpeg: {e}")
+        # Nếu có lỗi phát sinh, fallback sử dụng lại file gốc
+        return input_media_path
+#endregion
+
+#region 3. Hậu Xử Lý Văn Bản & Ngắt Dòng Phụ Đề
 def clean_space(text: str) -> str:
     return re.sub(r'\s+', ' ', text)
 
@@ -38,7 +69,6 @@ def preprocess_transcript(segments: list):
                 
                 has_punctuation = any(p in clean_word for p in split_punctuations)
                 
-                # Ngắt dòng khi gặp dấu câu hoặc đạt số từ tối đa
                 if has_punctuation or len(current_chunk) >= max_words_per_line:
                     processed_segments.append({
                         'start': chunk_start,
@@ -48,7 +78,6 @@ def preprocess_transcript(segments: list):
                     current_chunk = []
                     chunk_start = None
             
-            # Lưu những từ còn dư ở cuối đoạn
             if current_chunk:
                 processed_segments.append({
                     'start': chunk_start,
@@ -64,7 +93,7 @@ def preprocess_transcript(segments: list):
     return processed_segments
 #endregion
 
-#region 3. Khởi Tạo Mô Hình & Suy Luận Nhận Dạng (ASR Core)
+#region 4. Khởi Tạo Mô Hình & Suy Luận Nhận Dạng (ASR Core)
 def transcript_audio(
         input: str = "video.mp4",
         model_size: str = "base",
@@ -75,26 +104,37 @@ def transcript_audio(
     if not os.path.exists(input):
         raise FileNotFoundError(f"Tệp tin {input} không tồn tại.")
         
+    # BƯỚC TIỀN XỬ LÝ: Dùng FFmpeg bóc tách âm thanh sang chuẩn 16kHz Mono trước khi đưa vào AI
+    temp_audio = "temp_preprocessed.wav"
+    audio_for_model = extract_and_preprocess_audio(input, temp_audio)
+
     # Khởi tạo mô hình Faster-Whisper
     model = WhisperModel(model_size, device=device, compute_type=compute_type)
 
-    # Cấu hình tham số nhận dạng
     transcript_kwargs = {
         "beam_size": beam_size,
         "vad_filter": vad_filter,
         "word_timestamps": True
     }
 
-    # Suy luận gom mẻ (Batched Inference)
+    # Đưa file âm thanh đã tiền xử lý vào pipeline gom mẻ
     batched_pipeline = BatchedInferencePipeline(model=model)
-    segments, _ = batched_pipeline.transcribe(input, **transcript_kwargs, batch_size=8)
+    segments, _ = batched_pipeline.transcribe(audio_for_model, **transcript_kwargs, batch_size=8)
     
     segments = list(segments)
     processed_segments = preprocess_transcript(segments)
+
+    # Dọn dẹp tệp âm thanh tạm sau khi nhận dạng xong
+    if os.path.exists(temp_audio):
+        try:
+            os.remove(temp_audio)
+        except Exception:
+            pass
+
     return processed_segments
 #endregion
 
-#region 4. Định Dạng Thời Gian & Lưu Tệp SRT
+#region 5. Định Dạng Thời Gian & Lưu Tệp SRT
 def format_time(seconds: float) -> str:
     hrs = int(seconds // 3600)
     mins = int((seconds % 3600) // 60)

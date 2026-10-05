@@ -4,7 +4,6 @@ import sys
 import subprocess
 import gradio as gr
 
-# Nạp DLLs CUDA cho tiến trình
 nvidia_base = os.path.join(sys.prefix, "Lib", "site-packages", "nvidia")
 if os.path.exists(nvidia_base):
     for sub in ["cublas", "cudnn"]:
@@ -14,7 +13,6 @@ if os.path.exists(nvidia_base):
                 os.add_dll_directory(bin_dir)
             os.environ["PATH"] = bin_dir + os.pathsep + os.environ["PATH"]
 
-# Thêm thư mục gốc vào path để import module backend
 current_dir = os.path.dirname(os.path.abspath(__file__)) 
 root_dir = os.path.dirname(current_dir)
 sys.path.append(root_dir)
@@ -22,7 +20,7 @@ sys.path.append(root_dir)
 from backend.app.process import transcript_audio, save
 #endregion
 
-#region 2. Điều Phối Xử Lý & Hậu Xử Lý Gán Cứng Phụ Đề (FFmpeg)
+#region 2. Điều Phối Luồng Xử Lý & Hậu Xử Lý Ép Phụ Đề (FFmpeg)
 def process_media(file_path):
     if not file_path:
         return None, []
@@ -34,13 +32,13 @@ def process_media(file_path):
     srt_filename = os.path.join(current_dir, "phude_ketqua.srt")
     output_video_filename = os.path.join(current_dir, "video_cophude.mp4")
 
-    # Nhận diện âm thanh trực tiếp từ video/audio
+    # BƯỚC 1: Gọi hàm xử lý (bên trong đã tự động tiền xử lý tách audio 16kHz bằng FFmpeg và nhận diện AI)
     segments = transcript_audio(input=file_path)
     save(segments, srt_filename)
 
-    # Rẽ nhánh hậu xử lý
+    # BƯỚC 2: Rẽ nhánh Hậu Xử Lý (Post-processing)
     if is_video:
-        # Hậu xử lý bằng FFmpeg: Ép cứng phụ đề vào khung hình video
+        # Dùng FFmpeg ép cứng phụ đề (hardsub) vào video gốc
         escaped_srt = srt_filename.replace("\\", "/").replace(":", "\\:")
         
         ffmpeg_cmd = [
@@ -61,13 +59,12 @@ def process_media(file_path):
             print(e.stderr)
             return None, [srt_filename]          
     else:
-        # File âm thanh thuần: chỉ trả về tệp phụ đề .srt
         return None, [srt_filename]
 #endregion
 
 #region 3. Giao Diện Người Dùng Gradio
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
-    gr.Markdown("## 🎙 Giao Diện Nhận Dạng Giọng Nói & Tự Động Gắn Phụ Đề (Faster-Whisper)")
+    gr.Markdown("## 🎙 Giao Diện Nhận Dạng Giọng Nói (Faster-Whisper)")
     
     with gr.Row():
         with gr.Column():
