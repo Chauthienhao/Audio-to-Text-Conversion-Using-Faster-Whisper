@@ -50,7 +50,7 @@ def extract_and_preprocess_audio(input_media_path: str, output_wav_path: str = "
 def clean_space(text: str) -> str:
     return re.sub(r'\s+', ' ', text)
 
-def preprocess_transcript(segments: list):
+def chunking_segments(segments: list):
     processed_segments = []
     max_words_per_line = 20
     split_punctuations = {'.', '!', '?', ';', ':'}
@@ -97,7 +97,7 @@ def preprocess_transcript(segments: list):
 def transcript_audio(
         input: str = "video.mp4",
         model_size: str = "base",
-        device: str = "cuda",
+        device: str = "cpu",
         compute_type: str = "int8",
         beam_size: int = 3,
         vad_filter: bool = True):
@@ -122,7 +122,7 @@ def transcript_audio(
     segments, _ = batched_pipeline.transcribe(audio_for_model, **transcript_kwargs, batch_size=8)
     
     segments = list(segments)
-    processed_segments = preprocess_transcript(segments)
+    processed_segments = chunking_segments(segments)
 
     # Dọn dẹp tệp âm thanh tạm sau khi nhận dạng xong
     if os.path.exists(temp_audio):
