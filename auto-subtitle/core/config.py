@@ -5,7 +5,7 @@ SUBS_OUTPUT_DIR = Path("auto-subtitle/outputs") #đường dẫn tuyệt đối,
 SUBS_OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Cấu hình model
-MODEL_SIZE = "large"      # tiny / base / small / medium / large-v3
+MODEL_SIZE = "large-v3"      # tiny / base / small / medium / large-v3
 DEVICE = "cuda"            # "cuda" nếu có GPU NVIDIA
 COMPUTE_TYPE = "int8"     # "float16" nếu dùng GPU
 
