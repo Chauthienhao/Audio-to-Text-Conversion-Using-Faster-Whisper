@@ -1,3 +1,5 @@
+#tách cách hàm thành các file khác nhau thay vì gộp thành 1 file app.py
+
 from pathlib import Path
 import gradio as gr
 import time
@@ -6,6 +8,19 @@ from core.transcriber import transcribe
 from core.subtitle import to_srt
 from core.burner import burn_subtitle
 from core.cache import srt_path_for,file_hash
+
+
+#region script to text
+def srt_to_text(srt_content):
+    lines = []
+    for line in srt_content.splitlines():
+        line = line.strip()
+        if not line or line.isdigit() or " --> " in line:
+            continue
+        lines.append(line)
+    return "\n".join(lines)
+#endregion
+
 
 #region softsub cho video xem trên web
 def generate_subtitle(video_path, lang_name, progress=gr.Progress()):
@@ -17,8 +32,9 @@ def generate_subtitle(video_path, lang_name, progress=gr.Progress()):
     #nếu tồn tại phụ đề có sẵn thì sẽ dùng lại để sub cho video.
     if srt_path.exists():
         progress(1,desc="Đã có phụ đề, tái sử dụng lại.")
-        return gr.Video(value=video_path, subtitles=str(srt_path)), str(srt_path)
-    #Nếu chưa có phụ dề sẵn
+        full_text = srt_to_text(srt_path.read_text(encoding='utf-8'))
+        return gr.Video(value=video_path, subtitles=str(srt_path)), str(srt_path), full_text
+    #Nếu chưa có phụ đề sẵn
     progress(0,desc="nạp model...")
     segments, detected = transcribe(
         video_path,
@@ -30,9 +46,20 @@ def generate_subtitle(video_path, lang_name, progress=gr.Progress()):
 
     #ghi file và trả kết quả
     srt_path.write_text(to_srt(segments),encoding="utf-8")
+    full_text = "\n".join(seg["text"].strip() for seg in segments)
     print(f"Softsub time: {time.time() - start:.02f}")
-    return gr.Video(value=video_path, subtitles=str(srt_path)), str(srt_path)
+    return gr.Video(value=video_path, subtitles=str(srt_path)), str(srt_path), full_text
 #endregion
+
+#region Reload lại preview sau khi upload lại file .srt
+def reload_preview(video_path, srt_file):
+    if not video_path or not srt_file:
+        raise gr.Error("Cần có video và file phụ đề.")
+    srt_path = Path(srt_file)
+    text = srt_to_text(srt_path.read_text(encoding="utf-8"))
+    return gr.Video(value=video_path, subtitles=str(srt_path)), text
+#endregion
+
 #region export video
 def export_video(video_path, srt_file, progress=gr.Progress()):
     if not video_path:
@@ -55,12 +82,16 @@ with gr.Blocks(title="Auto Subtitle") as demo:
             video_in = gr.File(label="Video đầu vào")
             lang = gr.Dropdown(list(LANGUAGES), value="Tự động", label="Ngôn ngữ")
             btn = gr.Button("Tạo phụ đề", variant="primary")
+            preview_script = gr.Textbox(label="Hiện phụ đề",lines=8,interactive=True)
         with gr.Column():
-            video_out = gr.Video(label="Xem thử có phụ đề")
+            video_out = gr.Video(label="Xem thử có phụ đề",interactive=False)
             file_out = gr.File(label="Tải file .srt")
             export_btn = gr.Button("Xuất video có phụ đề cứng")
             video_final = gr.File(label="Tải video có phụ đề")
-    btn.click(generate_subtitle, [video_in, lang], [video_out, file_out])
+    btn.click(generate_subtitle, [video_in, lang], [video_out, file_out, preview_script])
+    file_out.upload(lambda: None, None, video_out).then(
+    reload_preview, [video_in, file_out], [video_out, preview_script]
+    )
     export_btn.click(export_video, [video_in, file_out], video_final)
 if __name__ == "__main__":
     demo.queue(default_concurrency_limit=1)
