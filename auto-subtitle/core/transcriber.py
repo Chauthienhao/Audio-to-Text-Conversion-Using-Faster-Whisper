@@ -17,8 +17,13 @@ def transcribe(video_path,language=None,on_progress=None):
                                          language=language,
                                          beam_size=5,
                                          vad_filter=True,
+                                         vad_parameters=dict(
+                                            threshold=0.6,                 # mặc định 0.5, tăng để bớt nhận nhầm nhạc là tiếng nói
+                                            min_silence_duration_ms=500,
+                                            speech_pad_ms=200,
+                                        ),
                                          condition_on_previous_text=False,
-                                         word_timestamps=True
+                                         word_timestamps=False
                                          )
         t_prep = time.perf_counter()
         results = []
