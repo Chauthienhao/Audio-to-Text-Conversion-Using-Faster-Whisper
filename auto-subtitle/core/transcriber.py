@@ -43,9 +43,12 @@ def transcribe(video_path,language=None,on_progress=None):
             print(f"speed: {info.duration / infer_time:.1f}x realtime (length: {info.duration:.0f}s)")
         return processed_segments, info.language
 
+#Function cho việc dọn khoảng trắng
 def clean_space(text: str) -> str:
     return re.sub(r'\s+', ' ', text)
 
+
+#Function dùng để hậu xử lý segments
 def chunking_segments(segments: list):
     processed_segments = []
     max_words_per_line = 20

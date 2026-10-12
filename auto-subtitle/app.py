@@ -13,15 +13,13 @@ with gr.Blocks(title="Auto Subtitle") as demo:
             btn_update = gr.Button("Cập nhật phụ đề", variant="primary")
         with gr.Column():
             video_out = gr.Video(label="Xem thử có phụ đề",interactive=False)
-            file_out = gr.File(visible=False)
+            file_out = gr.File(visible=False,interactive=False)
             export_btn = gr.Button("Xuất video có phụ đề cứng")
             video_final = gr.File(label="Tải video có phụ đề")
     btn_cr_sub.click(fn=generate_subtitle, 
                      inputs=[video_in, lang], 
                      outputs=[video_out, file_out, preview_script])
-    # file_out.upload(lambda: None, None, video_out).then(
-    # reload_preview, [video_in, file_out], [video_out, preview_script]
-    # )
+    btn_update.click(fn=update_subtitle,inputs=[video_in,preview_script,file_out],outputs=[video_out,file_out])
     file_out.clear(lambda: gr.update(visible=False),None,file_out)
     export_btn.click(export_video, [video_in, file_out], video_final)
 if __name__ == "__main__":
