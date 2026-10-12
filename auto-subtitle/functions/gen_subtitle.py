@@ -1,5 +1,4 @@
 from imports import *
-from .srt_to_text import srt_to_text
 
 def generate_subtitle(video_path, lang_name, progress=gr.Progress()):
     start = time.time()
@@ -10,7 +9,7 @@ def generate_subtitle(video_path, lang_name, progress=gr.Progress()):
     #nếu tồn tại phụ đề có sẵn thì sẽ dùng lại để sub cho video.
     if srt_path.exists():
         progress(1,desc="Đã có phụ đề, tái sử dụng lại.")
-        full_text = srt_to_text(srt_path.read_text(encoding='utf-8'))
+        full_text = srt_path.read_text(encoding='utf-8')
         return gr.Video(value=video_path, subtitles=str(srt_path)), gr.update(value=str(srt_path), label="Tải file .srt", visible=True), full_text
     #Nếu chưa có phụ đề sẵn
     progress(0,desc="nạp model...")
@@ -24,7 +23,7 @@ def generate_subtitle(video_path, lang_name, progress=gr.Progress()):
 
     #ghi file và trả kết quả
     srt_path.write_text(to_srt(segments),encoding="utf-8")
-    full_text = "\n".join(seg["text"].strip() for seg in segments)
+    full_text = srt_path.read_text(encoding='utf-8')
     print(f"Softsub time: {time.time() - start:.02f}")
     return gr.Video(value=video_path, subtitles=str(srt_path)), gr.update(value=str(srt_path), label="Tải file .srt", visible=True), full_text
 
