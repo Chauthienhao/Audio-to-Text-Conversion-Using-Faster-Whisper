@@ -14,8 +14,5 @@ COMPUTE_TYPE = "int8"     # "float16" nếu dùng GPU
 LANGUAGES = {
     "Tự động": None,
     "Tiếng Việt": "vi",
-    "English": "en",
-    "日本語": "ja",
-    "한국어": "ko",
-    "中文": "zh",
+    "English": "en"
 }

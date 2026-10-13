@@ -27,14 +27,17 @@ def transcribe(video_path,language=None,on_progress=None):
                                          condition_on_previous_text=False,
                                          word_timestamps=True
                                          )
+        #Chạy qua vòng lặp để lấy tiến độ % cho giao diện
         t_prep = time.perf_counter()
-        results = []
-        processed_segments = chunking_segments(segments)
-        # for seg in segments:
-        #     results.append({"start": seg.start, "end": seg.end, "text": seg.text})
-        #     if on_progress and info.duration>0:
-        #         on_progress(min(seg.end/info.duration,1.0))
+        raw_segments = []
+        for seg in segments:
+            raw_segments.append(seg)
+            if on_progress and info.duration>0:
+                on_progress(min(seg.end/info.duration,1.0))
         t_done = time.perf_counter()
+
+        #Chunking lại dữ liệu thô đã lặp ở trên
+        processed_segments = chunking_segments(raw_segments)
         infer_time = t_done - t_prep
         print(f"Load model:      {t_load - t0:.2f}s")
         print(f"prep audio: {t_prep - t_load:.2f}s")
