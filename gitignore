@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# For the project i don't want script file to be upload
+*.srt
+
 # C extensions
 *.so
 
