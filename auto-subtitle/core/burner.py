@@ -13,6 +13,7 @@ def burn_subtitle(video_path, srt_path, output_path):
         "-i", str(video),
         "-vf", f"subtitles={srt.name}",
         "-c:a", "aac",
+        "-c:v", "libx264",
         str(out),
     ]
     result = subprocess.run(
