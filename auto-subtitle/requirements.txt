@@ -1,2 +1,2 @@
 gradio==6.28.0
-faster-whisper==1.21
+faster-whisper==1.2.1

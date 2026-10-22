@@ -5,6 +5,7 @@ __pycache__/
 
 # For the project i don't want script file to be upload
 *.srt
+outputs/
 
 # C extensions
 *.so
