@@ -55,7 +55,7 @@ def clean_space(text: str) -> str:
 def chunking_segments(segments: list):
     processed_segments = []
     max_words_per_line = 20
-    split_punctuations = {'.', '!', '?', ';', ':'}
+    split_punctuations = {'.', '!', '?', ';'}
     
     for segment in segments:
         if hasattr(segment, 'words') and segment.words:
