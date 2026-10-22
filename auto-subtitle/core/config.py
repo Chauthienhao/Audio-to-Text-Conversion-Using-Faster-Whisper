@@ -6,9 +6,9 @@ SUBS_OUTPUT_DIR = BASE_DIR / "outputs"
 SUBS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Cấu hình model
-MODEL_SIZE = "large-v3"      # tiny / base / small / medium / large-v3
-DEVICE = "cuda"            # "cuda" nếu có GPU NVIDIA
-COMPUTE_TYPE = "int8"     # "float16" nếu dùng GPU
+MODEL_SIZE = "large-v3"
+DEVICE = "cuda"            
+COMPUTE_TYPE = "int8" 
 
 # Tên hiển thị -> mã ngôn ngữ (None = tự phát hiện)
 LANGUAGES = {
