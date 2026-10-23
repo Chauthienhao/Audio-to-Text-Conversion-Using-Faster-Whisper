@@ -6,8 +6,8 @@ SUBS_OUTPUT_DIR = BASE_DIR / "outputs"
 SUBS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Cấu hình model
-MODEL_SIZE = "large-v3"
-DEVICE = "cuda"            
+MODEL_SIZE = "base"
+DEVICE = "cpu"            
 COMPUTE_TYPE = "int8" 
 
 # Tên hiển thị -> mã ngôn ngữ (None = tự phát hiện)
